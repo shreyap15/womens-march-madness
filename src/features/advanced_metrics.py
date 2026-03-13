@@ -59,6 +59,8 @@ def compute_efficiency_by_team(detailed: pd.DataFrame) -> pd.DataFrame:
     all_games = pd.concat([w, l], ignore_index=True)
 
     grouped = all_games.groupby(["Season", "TeamID"], as_index=False).sum()
+    games = all_games.groupby(["Season", "TeamID"], as_index=False).size().rename(columns={"size": "Games"})
+    grouped = grouped.merge(games, on=["Season", "TeamID"], how="left")
 
     grouped["OffRtg"] = grouped["Points"] / grouped["Poss"]
     grouped["DefRtg"] = grouped["OppPoints"] / grouped["OppPoss"]
@@ -70,5 +72,6 @@ def compute_efficiency_by_team(detailed: pd.DataFrame) -> pd.DataFrame:
     grouped["DREB_rate"] = grouped["DREB"] / (grouped["OREB"] + grouped["DREB"])
     grouped["TO_rate"] = grouped["TO"] / grouped["Poss"]
     grouped["AST_TO"] = grouped["AST"] / grouped["TO"].replace(0, 1)
+    grouped["PossPerGame"] = grouped["Poss"] / grouped["Games"]
 
     return grouped
