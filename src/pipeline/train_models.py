@@ -174,6 +174,7 @@ def train_models(dataset_path: str = "data/processed/training_dataset.csv") -> N
     metrics_rows = _eval("validation", val) + _eval("holdout", holdout)
     metrics = pd.DataFrame(metrics_rows).sort_values(["split", "model"])
     metrics.to_csv("data/processed/model_metrics.csv", index=False)
+    metrics.to_csv("data/processed/model_metrics_all_models.csv", index=False)
     print(metrics.to_string(index=False))
 
 
