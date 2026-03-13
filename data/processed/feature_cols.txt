@@ -10,6 +10,9 @@ AST_TO_diff
 SeedNum_diff
 SeedPower_diff
 ConferenceElo_diff
+OppElo_diff
+OppNetRtg_diff
+ConfTourneyWins_diff
 WinPct_diff
 MarginAvg_diff
 CloseWinPct_diff

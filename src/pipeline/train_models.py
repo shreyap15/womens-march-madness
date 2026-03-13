@@ -6,6 +6,7 @@ import pandas as pd
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.linear_model import LogisticRegression
 from sklearn.impute import SimpleImputer
+from sklearn.metrics import accuracy_score, log_loss
 
 from src.models.logistic_model import LogisticConfig, train_logistic
 from src.models.xgboost_model import train_xgboost
@@ -87,6 +88,41 @@ def train_models(dataset_path: str = "data/processed/training_dataset.csv") -> N
     }
 
     joblib.dump(bundle, "models/saved_models.pkl")
+
+    # Metrics on validation and holdout splits
+    _, _, holdout = _split_by_season(df)
+
+    def _eval(split_name: str, split_df: pd.DataFrame) -> list[dict]:
+        X = split_df[feature_cols]
+        y = split_df["Target"]
+        split_preds = {
+            "logistic": log_model.predict_proba(X)[:, 1],
+            "rf": rf.predict_proba(rf_pipe.transform(X))[:, 1],
+            "elo": 0.5 + 0.5 * np.tanh(X["Elo_diff"] / 400.0),
+        }
+        if xgb_model is not None:
+            split_preds["xgb"] = xgb_model.predict_proba(X)[:, 1]
+        blended_local = np.asarray(blend_predictions(split_preds, weights=weights))
+        calibrated = calibrator.predict_proba(blended_local.reshape(-1, 1))[:, 1]
+        split_preds["ensemble"] = calibrated
+
+        rows = []
+        for name, p in split_preds.items():
+            p = np.clip(p, 1e-6, 1 - 1e-6)
+            rows.append(
+                {
+                    "split": split_name,
+                    "model": name,
+                    "accuracy": accuracy_score(y, p >= 0.5),
+                    "log_loss": log_loss(y, p),
+                }
+            )
+        return rows
+
+    metrics_rows = _eval("validation", val) + _eval("holdout", holdout)
+    metrics = pd.DataFrame(metrics_rows).sort_values(["split", "model"])
+    metrics.to_csv("data/processed/model_metrics.csv", index=False)
+    print(metrics.to_string(index=False))
 
 
 if __name__ == "__main__":

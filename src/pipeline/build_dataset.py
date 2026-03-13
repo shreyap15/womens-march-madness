@@ -117,6 +117,28 @@ def build_team_features(raw: dict) -> pd.DataFrame:
     team = team.merge(conf_tourney, on=["Season", "TeamID"], how="left")
     team = attach_conference_strength(team, raw["conferences"], elo_by_team)
 
+    # Strength of schedule
+    regular = raw["regular_compact"]
+    w = regular[["Season", "WTeamID", "LTeamID"]].rename(
+        columns={"WTeamID": "TeamID", "LTeamID": "OppTeamID"}
+    )
+    l = regular[["Season", "WTeamID", "LTeamID"]].rename(
+        columns={"LTeamID": "TeamID", "WTeamID": "OppTeamID"}
+    )
+    games = pd.concat([w, l], ignore_index=True)
+    opp_elo = elo_by_team.rename(columns={"TeamID": "OppTeamID", "Elo": "OppElo"})
+    opp_net = eff[["Season", "TeamID", "NetRtg"]].rename(
+        columns={"TeamID": "OppTeamID", "NetRtg": "OppNetRtg"}
+    )
+    sos = games.merge(opp_elo, on=["Season", "OppTeamID"], how="left").merge(
+        opp_net, on=["Season", "OppTeamID"], how="left"
+    )
+    sos = (
+        sos.groupby(["Season", "TeamID"], as_index=False)
+        .agg(OppElo=("OppElo", "mean"), OppNetRtg=("OppNetRtg", "mean"))
+    )
+    team = team.merge(sos, on=["Season", "TeamID"], how="left")
+
     return team
 
 
@@ -170,6 +192,9 @@ def build_training_dataset(raw: dict) -> Tuple[pd.DataFrame, List[str]]:
         "SeedNum",
         "SeedPower",
         "ConferenceElo",
+        "OppElo",
+        "OppNetRtg",
+        "ConfTourneyWins",
         "WinPct",
         "MarginAvg",
         "CloseWinPct",
@@ -178,7 +203,7 @@ def build_training_dataset(raw: dict) -> Tuple[pd.DataFrame, List[str]]:
         "NeutralWinPct",
     ]
 
-    tourney = raw["tourney_detailed"]
+    tourney = raw["tourney_compact"]
     rows: List[dict] = []
     for _, game in tourney.iterrows():
         rows.extend(_matchup_rows(game, team, feature_cols))
