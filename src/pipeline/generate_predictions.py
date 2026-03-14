@@ -190,16 +190,25 @@ def generate_predictions(
 
     log_p = bundle["logistic"].predict_proba(X)[:, 1]
     rf_p = bundle["rf_pipeline"].predict_proba(X)[:, 1]
+    if bundle.get("cal_log_type") == "platt":
+        log_cal = bundle["cal_log"].predict_proba(log_p.reshape(-1, 1))[:, 1]
+    else:
+        log_cal = bundle["cal_log"].transform(log_p)
+    if bundle.get("cal_rf_type") == "platt":
+        rf_cal = bundle["cal_rf"].predict_proba(rf_p.reshape(-1, 1))[:, 1]
+    else:
+        rf_cal = bundle["cal_rf"].transform(rf_p)
     preds = {
-        "logistic": bundle["cal_log"].transform(log_p),
-        "rf": bundle["cal_rf"].transform(rf_p),
+        "logistic": log_cal,
+        "rf": rf_cal,
     }
 
     # Use calibrated logistic regression as primary submission model
     calibrated = preds["logistic"]
+    submission_pred = np.clip(calibrated, 0.05, 0.95)
 
     ids = matchup.apply(lambda r: f"{season}_{int(r['TeamA'])}_{int(r['TeamB'])}", axis=1)
-    submission = pd.DataFrame({"ID": ids, "Pred": calibrated})
+    submission = pd.DataFrame({"ID": ids, "Pred": submission_pred})
     submission.to_csv(out_path, index=False)
 
     # Write winner/loser list (based on 0.5 threshold) as primary pairs file

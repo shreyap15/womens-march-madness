@@ -4,6 +4,9 @@ Last5NetRtg_diff
 Last10NetRtg_diff
 TrendNetRtg_diff
 NetRtg_diff
+NetRtgStd_diff
+NetRtgConf_diff
+GamesPlayed_diff
 eFG_diff
 TS_diff
 OREB_rate_diff

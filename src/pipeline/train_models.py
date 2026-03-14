@@ -35,6 +35,9 @@ def train_models(dataset_path: str = "data/processed/training_dataset.csv") -> N
         "Elo",
         "AdjNetRtg",
         "NetRtg",
+        "NetRtgStd",
+        "NetRtgConf",
+        "GamesPlayed",
         "eFG",
         "TS",
         "OREB_rate",
@@ -69,13 +72,56 @@ def train_models(dataset_path: str = "data/processed/training_dataset.csv") -> N
     X_val = val[feature_cols]
     y_val = val["Target"]
 
-    # Logistic regression baseline
-    log_model, _ = train_logistic(
-        train,
-        feature_cols,
-        "Target",
-        config=LogisticConfig(max_iter=500),
-    )
+    # Logistic regression baseline (tune C on validation with calibration)
+    c_grid = [0.05, 0.1, 0.2, 0.5, 1.0]
+    best_log = None
+    best_log_val = None
+    best_log_cal = None
+    best_log_cal_type = None
+    best_log_loss = float("inf")
+    best_log_c = None
+    for c in c_grid:
+        log_model_tmp, _ = train_logistic(
+            train,
+            feature_cols,
+            "Target",
+            config=LogisticConfig(max_iter=500, C=c),
+        )
+        log_val_tmp = log_model_tmp.predict_proba(X_val)[:, 1]
+        log_iso = IsotonicRegression(out_of_bounds="clip")
+        log_iso.fit(log_val_tmp, y_val)
+        log_sig = LogisticRegression(max_iter=1000)
+        log_sig.fit(log_val_tmp.reshape(-1, 1), y_val)
+
+        p_iso = np.clip(log_iso.transform(log_val_tmp), 1e-6, 1 - 1e-6)
+        p_sig = np.clip(
+            log_sig.predict_proba(log_val_tmp.reshape(-1, 1))[:, 1], 1e-6, 1 - 1e-6
+        )
+        ll_iso = log_loss(y_val, p_iso)
+        ll_sig = log_loss(y_val, p_sig)
+        if ll_sig < ll_iso:
+            ll = ll_sig
+            cal = log_sig
+            cal_type = "platt"
+            val_pred = p_sig
+        else:
+            ll = ll_iso
+            cal = log_iso
+            cal_type = "isotonic"
+            val_pred = p_iso
+
+        if ll < best_log_loss:
+            best_log_loss = ll
+            best_log = log_model_tmp
+            best_log_cal = cal
+            best_log_cal_type = cal_type
+            best_log_val = val_pred
+            best_log_c = c
+
+    log_model = best_log
+    log_cal_type = best_log_cal_type
+    cal_log = best_log_cal
+    log_cal_pred = best_log_val
 
     # Random forest
     rf = RandomForestClassifier(
@@ -89,18 +135,35 @@ def train_models(dataset_path: str = "data/processed/training_dataset.csv") -> N
     rf_pipeline.fit(X_train, y_train)
 
 
-    # Calibrate each model on validation set (probability-level isotonic)
-    log_val = log_model.predict_proba(X_val)[:, 1]
+    # Calibrate each model on validation set (compare isotonic vs sigmoid)
     rf_val = rf_pipeline.predict_proba(X_val)[:, 1]
-    cal_log = IsotonicRegression(out_of_bounds="clip")
-    cal_log.fit(log_val, y_val)
-    cal_rf = IsotonicRegression(out_of_bounds="clip")
-    cal_rf.fit(rf_val, y_val)
+
+    cal_rf_iso = IsotonicRegression(out_of_bounds="clip")
+    cal_rf_iso.fit(rf_val, y_val)
+    cal_rf_sig = LogisticRegression(max_iter=1000)
+    cal_rf_sig.fit(rf_val.reshape(-1, 1), y_val)
+
+    def _pick_calibrator(
+        base_probs: np.ndarray,
+        iso: IsotonicRegression,
+        sig: LogisticRegression,
+    ) -> tuple[str, object, np.ndarray]:
+        p_iso = np.clip(iso.transform(base_probs), 1e-6, 1 - 1e-6)
+        p_sig = np.clip(
+            sig.predict_proba(base_probs.reshape(-1, 1))[:, 1], 1e-6, 1 - 1e-6
+        )
+        ll_iso = log_loss(y_val, p_iso)
+        ll_sig = log_loss(y_val, p_sig)
+        if ll_sig < ll_iso:
+            return "platt", sig, p_sig
+        return "isotonic", iso, p_iso
+
+    rf_cal_type, cal_rf, rf_cal_pred = _pick_calibrator(rf_val, cal_rf_iso, cal_rf_sig)
 
     # Validation predictions (calibrated)
     preds = {
-        "logistic": cal_log.transform(log_val),
-        "rf": cal_rf.transform(rf_val),
+        "logistic": log_cal_pred,
+        "rf": rf_cal_pred,
     }
 
     def _optimize_weights(preds_dict: dict, y_true: pd.Series) -> dict:
@@ -148,6 +211,9 @@ def train_models(dataset_path: str = "data/processed/training_dataset.csv") -> N
         "rf_pipeline": rf_pipeline,
         "cal_log": cal_log,
         "cal_rf": cal_rf,
+        "cal_log_type": log_cal_type,
+        "cal_rf_type": rf_cal_type,
+        "logistic_C": best_log_c,
         "weights": weights,
         "meta_features": meta_features,
         "meta_model": meta,
@@ -163,10 +229,25 @@ def train_models(dataset_path: str = "data/processed/training_dataset.csv") -> N
         y = split_df["Target"]
         log_p = log_model.predict_proba(X)[:, 1]
         rf_p = rf_pipeline.predict_proba(X)[:, 1]
+        if log_cal_type == "platt":
+            log_cal = cal_log.predict_proba(log_p.reshape(-1, 1))[:, 1]
+        else:
+            log_cal = cal_log.transform(log_p)
+        if rf_cal_type == "platt":
+            rf_cal = cal_rf.predict_proba(rf_p.reshape(-1, 1))[:, 1]
+        else:
+            rf_cal = cal_rf.transform(rf_p)
         split_preds = {
-            "logistic": cal_log.transform(log_p),
-            "rf": cal_rf.transform(rf_p),
+            "logistic": log_cal,
+            "rf": rf_cal,
         }
+        # Simple blend without meta-learner
+        blend_60_40 = 0.60 * log_cal + 0.40 * rf_cal
+        split_preds["blend60_40"] = blend_60_40
+
+        # Clipped variants for log loss protection
+        split_preds["logistic_clip"] = np.clip(log_cal, 0.05, 0.95)
+        split_preds["blend60_40_clip"] = np.clip(blend_60_40, 0.05, 0.95)
         blended_local = np.asarray(blend_predictions(split_preds, weights=weights))
         Z = pd.DataFrame(split_preds)[meta_features].values
         ensemble = meta.predict_proba(Z)[:, 1]
@@ -192,6 +273,7 @@ def train_models(dataset_path: str = "data/processed/training_dataset.csv") -> N
     metrics = pd.DataFrame(metrics_rows).sort_values(["split", "model"])
     metrics.to_csv("data/processed/model_metrics.csv", index=False)
     metrics.to_csv("data/processed/model_metrics_all_models.csv", index=False)
+    print(f"Selected logistic C={best_log_c}, calibration={log_cal_type}")
     print(metrics.to_string(index=False))
 
 

@@ -57,10 +57,19 @@ def compute_efficiency_by_team(detailed: pd.DataFrame) -> pd.DataFrame:
     )
 
     all_games = pd.concat([w, l], ignore_index=True)
+    all_games["OffRtg"] = all_games["Points"] / all_games["Poss"]
+    all_games["DefRtg"] = all_games["OppPoints"] / all_games["Poss"]
+    all_games["NetRtg"] = all_games["OffRtg"] - all_games["DefRtg"]
 
     grouped = all_games.groupby(["Season", "TeamID"], as_index=False).sum()
     games = all_games.groupby(["Season", "TeamID"], as_index=False).size().rename(columns={"size": "Games"})
     grouped = grouped.merge(games, on=["Season", "TeamID"], how="left")
+    net_std = (
+        all_games.groupby(["Season", "TeamID"], as_index=False)["NetRtg"]
+        .std()
+        .rename(columns={"NetRtg": "NetRtgStd"})
+    )
+    grouped = grouped.merge(net_std, on=["Season", "TeamID"], how="left")
 
     grouped["OffRtg"] = grouped["Points"] / grouped["Poss"]
     grouped["DefRtg"] = grouped["OppPoints"] / grouped["OppPoss"]
@@ -73,6 +82,8 @@ def compute_efficiency_by_team(detailed: pd.DataFrame) -> pd.DataFrame:
     grouped["TO_rate"] = grouped["TO"] / grouped["Poss"]
     grouped["AST_TO"] = grouped["AST"] / grouped["TO"].replace(0, 1)
     grouped["PossPerGame"] = grouped["Poss"] / grouped["Games"]
+    grouped = grouped.rename(columns={"Games": "GamesPlayed"})
+    grouped["NetRtgConf"] = grouped["NetRtg"] / grouped["NetRtgStd"].replace(0, pd.NA)
 
     # Home/Away splits for road performance gap
     home_games = df[df["WLoc"] == "H"]
