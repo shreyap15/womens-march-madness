@@ -216,15 +216,6 @@ def generate_predictions(
     winners_out = pd.DataFrame({"WTeamID": winners, "LTeamID": losers})
     winners_out.to_csv("submissions/WNCAATourneyPredictions.csv", index=False)
 
-    # Write pair list without predictions separately
-    pairs_out = pd.DataFrame(
-        {
-            "TeamA": matchup["TeamA"].astype(int),
-            "TeamB": matchup["TeamB"].astype(int),
-        }
-    )
-    pairs_out.to_csv("submissions/WNCAATourneyPairs.csv", index=False)
-
     # Write predictions separately
     preds_out = pd.DataFrame(
         {

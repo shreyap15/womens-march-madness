@@ -8,6 +8,7 @@ import pandas as pd
 from sklearn.impute import SimpleImputer
 from sklearn.linear_model import LogisticRegression
 from sklearn.pipeline import Pipeline
+from sklearn.preprocessing import StandardScaler
 
 
 @dataclass(frozen=True)
@@ -25,6 +26,7 @@ def train_logistic(
     model = Pipeline(
         steps=[
             ("imputer", SimpleImputer(strategy="median")),
+            ("scaler", StandardScaler(with_mean=False)),
             ("clf", LogisticRegression(max_iter=config.max_iter, C=config.C)),
         ]
     )
