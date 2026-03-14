@@ -48,6 +48,35 @@ def build_elo_by_team(raw: dict) -> pd.DataFrame:
         .tail(1)
         .reset_index(drop=True)
     )
+    # Compute recent Elo trajectory and season peak from history
+    history = history.copy()
+    history["DayNum"] = raw["regular_compact"].merge(
+        history[["Season", "WTeamID", "LTeamID", "Margin"]],
+        left_on=["Season", "WTeamID", "LTeamID"],
+        right_on=["Season", "WTeamID", "LTeamID"],
+        how="right",
+    )["DayNum"]
+    history = history.sort_values(["Season", "DayNum"])
+    w_hist = history[["Season", "DayNum", "WTeamID", "Elo_W_post"]].rename(
+        columns={"WTeamID": "TeamID", "Elo_W_post": "EloPost"}
+    )
+    l_hist = history[["Season", "DayNum", "LTeamID", "Elo_L_post"]].rename(
+        columns={"LTeamID": "TeamID", "Elo_L_post": "EloPost"}
+    )
+    all_hist = pd.concat([w_hist, l_hist], ignore_index=True).sort_values(["Season", "DayNum"])
+    # Use last 30 days of regular season (DayNum >= 100) as proxy window
+    last_30 = all_hist[all_hist["DayNum"] >= 100]
+    elo_traj = last_30.groupby(["Season", "TeamID"], as_index=False).agg(
+        EloRecent=("EloPost", "last"),
+        EloEarly=("EloPost", "first"),
+    )
+    elo_traj["EloTrajectory"] = elo_traj["EloRecent"] - elo_traj["EloEarly"]
+    elo_peak = all_hist.groupby(["Season", "TeamID"], as_index=False)["EloPost"].max().rename(
+        columns={"EloPost": "EloPeak"}
+    )
+    elo_by_team = elo_by_team.merge(elo_traj[["Season", "TeamID", "EloTrajectory"]], on=["Season", "TeamID"], how="left")
+    elo_by_team = elo_by_team.merge(elo_peak, on=["Season", "TeamID"], how="left")
+    elo_by_team["EloCurrentVsPeak"] = elo_by_team["Elo"] / elo_by_team["EloPeak"]
     return elo_by_team
 
 
@@ -190,6 +219,21 @@ def build_team_features(raw: dict) -> pd.DataFrame:
     )
     team = team.merge(stability[["Season", "TeamID", "WinPctStd3"]], on=["Season", "TeamID"], how="left")
 
+    # Quality of wins: average opponent net rating in wins, weighted by margin
+    reg_compact = raw["regular_compact"].copy()
+    reg_compact["Margin"] = reg_compact["WScore"] - reg_compact["LScore"]
+    opp_net = eff[["Season", "TeamID", "NetRtg"]].rename(columns={"TeamID": "LTeamID", "NetRtg": "OppNetRtg"})
+    wins = reg_compact.merge(opp_net, on=["Season", "LTeamID"], how="left")
+    wins["Weight"] = wins["Margin"].clip(lower=1)
+    qow = (
+        wins.groupby(["Season", "WTeamID"])
+        .apply(lambda g: (g["OppNetRtg"] * g["Weight"]).sum() / g["Weight"].sum())
+        .rename("QualityWins")
+        .reset_index()
+        .rename(columns={"WTeamID": "TeamID"})
+    )
+    team = team.merge(qow, on=["Season", "TeamID"], how="left")
+
     # Coach features (2026 snapshot, if available)
     try:
         coaches = pd.read_csv("data/WNCAAWCoaches_2026_mapped.csv")
@@ -262,6 +306,8 @@ def build_training_dataset(raw: dict) -> Tuple[pd.DataFrame, List[str]]:
         "DREB_rate",
         "TO_rate",
         "AST_TO",
+        "RoadPerformanceGap",
+        "QualityWins",
         "SeedNum",
         "SeedPower",
         "ConferenceElo",

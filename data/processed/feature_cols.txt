@@ -10,6 +10,8 @@ OREB_rate_diff
 DREB_rate_diff
 TO_rate_diff
 AST_TO_diff
+RoadPerformanceGap_diff
+QualityWins_diff
 SeedNum_diff
 SeedPower_diff
 ConferenceElo_diff

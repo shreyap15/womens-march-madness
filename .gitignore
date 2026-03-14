@@ -14,3 +14,7 @@ data/march_madness_data/
 # Organized archives
 data/men_legacy/
 data/archive_zips/
+
+# Local analysis snapshots
+submissions/submission_2026*.csv
+submissions/submission_sanity_*.csv

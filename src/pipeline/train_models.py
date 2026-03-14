@@ -30,19 +30,36 @@ def _split_by_season(df: pd.DataFrame):
 
 def train_models(dataset_path: str = "data/processed/training_dataset.csv") -> None:
     df = pd.read_csv(dataset_path)
-    feature_cols = [c for c in df.columns if c.endswith("_diff")]
-    for extra in [
-        "H2HGames",
-        "H2HWinPct",
-        "H2HMargin",
-        "ClassicUpsetSeed",
-        "SeedMatchupUpsetRate",
-        "NetRtgVsSeed",
-        "ESPNSeedResidualDiff",
-        "SeedResidualInteraction",
-        "FTESeedResidualDiff",
-        "FTESeedResidualInteraction",
-    ]:
+    # Pre-selection feature set (only features available before seeds/ESPN/FTE)
+    preselect_base = [
+        "Elo",
+        "AdjNetRtg",
+        "NetRtg",
+        "eFG",
+        "TS",
+        "OREB_rate",
+        "DREB_rate",
+        "TO_rate",
+        "AST_TO",
+        "WinPct",
+        "MarginAvg",
+        "MarginStd",
+        "CloseWinPct",
+        "HomeWinPct",
+        "AwayWinPct",
+        "NeutralWinPct",
+        "Last5NetRtg",
+        "Last10NetRtg",
+        "TrendNetRtg",
+        "RoadPerformanceGap",
+        "QualityWins",
+        "EloTrajectory",
+        "EloPeak",
+        "EloCurrentVsPeak",
+        "WinPctStd3",
+    ]
+    feature_cols = [f"{c}_diff" for c in preselect_base if f"{c}_diff" in df.columns]
+    for extra in ["H2HGames", "H2HWinPct", "H2HMargin"]:
         if extra in df.columns:
             feature_cols.append(extra)
 

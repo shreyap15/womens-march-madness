@@ -98,7 +98,19 @@ def _build_matchups(
     return pd.DataFrame(rows)
 
 
-def generate_predictions(season: int, out_path: str = "submissions/submission.csv") -> None:
+def _missing_report(X: pd.DataFrame, out_path: str) -> pd.DataFrame:
+    missing = X.isna().mean().sort_values(ascending=False)
+    report = missing.reset_index()
+    report.columns = ["feature", "missing_pct"]
+    report.to_csv(out_path, index=False)
+    return report
+
+
+def generate_predictions(
+    season: int,
+    out_path: str = "submissions/submission.csv",
+    strict_missing_check: bool = True,
+) -> None:
     raw = load_raw()
     team_features = build_team_features(raw)
     all_teams = raw["teams"][["TeamID"]].drop_duplicates()
@@ -156,6 +168,26 @@ def generate_predictions(season: int, out_path: str = "submissions/submission.cs
     )
     X = matchup[feature_cols]
 
+    # Missing value diagnostics for prediction-time feature coverage
+    report = _missing_report(X, "data/processed/feature_missing_2026.csv")
+    core_features = [
+        "Elo_diff",
+        "AdjNetRtg_diff",
+        "NetRtg_diff",
+        "eFG_diff",
+        "TS_diff",
+        "WinPct_diff",
+        "MarginAvg_diff",
+    ]
+    core_missing = report[report["feature"].isin(core_features)]
+    if strict_missing_check and not core_missing.empty:
+        bad = core_missing[core_missing["missing_pct"] > 0.10]
+        if not bad.empty:
+            raise ValueError(
+                "High missing rate for core features: "
+                + ", ".join(f"{r.feature}={r.missing_pct:.2%}" for r in bad.itertuples())
+            )
+
     log_p = bundle["logistic"].predict_proba(X)[:, 1]
     rf_p = bundle["rf_pipeline"].predict_proba(X)[:, 1]
     preds = {
@@ -170,14 +202,28 @@ def generate_predictions(season: int, out_path: str = "submissions/submission.cs
     submission = pd.DataFrame({"ID": ids, "Pred": calibrated})
     submission.to_csv(out_path, index=False)
 
-    # Write pair list without predictions (IDs only)
+    # Write winner/loser list (based on 0.5 threshold) as primary pairs file
+    winners = np.where(
+        calibrated >= 0.5,
+        matchup["TeamA"].astype(int).values,
+        matchup["TeamB"].astype(int).values,
+    )
+    losers = np.where(
+        calibrated >= 0.5,
+        matchup["TeamB"].astype(int).values,
+        matchup["TeamA"].astype(int).values,
+    )
+    winners_out = pd.DataFrame({"WTeamID": winners, "LTeamID": losers})
+    winners_out.to_csv("submissions/WNCAATourneyPredictions.csv", index=False)
+
+    # Write pair list without predictions separately
     pairs_out = pd.DataFrame(
         {
-            "WTeamID": matchup["TeamA"].astype(int),
-            "LTeamID": matchup["TeamB"].astype(int),
+            "TeamA": matchup["TeamA"].astype(int),
+            "TeamB": matchup["TeamB"].astype(int),
         }
     )
-    pairs_out.to_csv("submissions/WNCAATourneyPredictions.csv", index=False)
+    pairs_out.to_csv("submissions/WNCAATourneyPairs.csv", index=False)
 
     # Write predictions separately
     preds_out = pd.DataFrame(
@@ -190,4 +236,4 @@ def generate_predictions(season: int, out_path: str = "submissions/submission.cs
 
 
 if __name__ == "__main__":
-    generate_predictions(season=2026)
+    generate_predictions(season=2026, strict_missing_check=False)

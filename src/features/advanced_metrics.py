@@ -74,4 +74,69 @@ def compute_efficiency_by_team(detailed: pd.DataFrame) -> pd.DataFrame:
     grouped["AST_TO"] = grouped["AST"] / grouped["TO"].replace(0, 1)
     grouped["PossPerGame"] = grouped["Poss"] / grouped["Games"]
 
+    # Home/Away splits for road performance gap
+    home_games = df[df["WLoc"] == "H"]
+    away_games = df[df["WLoc"] == "A"]
+
+    def _team_split(split_df: pd.DataFrame, side: str) -> pd.DataFrame:
+        if side == "home":
+            w = split_df.assign(
+                TeamID=split_df["WTeamID"],
+                Points=split_df["WScore"],
+                OppPoints=split_df["LScore"],
+                FGA=split_df["WFGA"],
+                OREB=split_df["WOR"],
+                TO=split_df["WTO"],
+                FTA=split_df["WFTA"],
+            )
+            l = split_df.assign(
+                TeamID=split_df["LTeamID"],
+                Points=split_df["LScore"],
+                OppPoints=split_df["WScore"],
+                FGA=split_df["LFGA"],
+                OREB=split_df["LOR"],
+                TO=split_df["LTO"],
+                FTA=split_df["LFTA"],
+            )
+        else:
+            w = split_df.assign(
+                TeamID=split_df["WTeamID"],
+                Points=split_df["WScore"],
+                OppPoints=split_df["LScore"],
+                FGA=split_df["WFGA"],
+                OREB=split_df["WOR"],
+                TO=split_df["WTO"],
+                FTA=split_df["WFTA"],
+            )
+            l = split_df.assign(
+                TeamID=split_df["LTeamID"],
+                Points=split_df["LScore"],
+                OppPoints=split_df["WScore"],
+                FGA=split_df["LFGA"],
+                OREB=split_df["LOR"],
+                TO=split_df["LTO"],
+                FTA=split_df["LFTA"],
+            )
+        all_split = pd.concat([w, l], ignore_index=True)
+        all_split["Poss"] = _possessions(all_split["FGA"], all_split["OREB"], all_split["TO"], all_split["FTA"])
+        all_split["OffRtg"] = all_split["Points"] / all_split["Poss"]
+        all_split["DefRtg"] = all_split["OppPoints"] / all_split["Poss"]
+        return all_split.groupby(["Season", "TeamID"], as_index=False).agg(
+            OffRtg=("OffRtg", "mean"),
+            DefRtg=("DefRtg", "mean"),
+        )
+
+    home = _team_split(home_games, "home").rename(
+        columns={"OffRtg": "HomeOffRtg", "DefRtg": "HomeDefRtg"}
+    )
+    away = _team_split(away_games, "away").rename(
+        columns={"OffRtg": "AwayOffRtg", "DefRtg": "AwayDefRtg"}
+    )
+
+    grouped = grouped.merge(home, on=["Season", "TeamID"], how="left")
+    grouped = grouped.merge(away, on=["Season", "TeamID"], how="left")
+    grouped["RoadNetRtg"] = grouped["AwayOffRtg"] - grouped["AwayDefRtg"]
+    grouped["HomeNetRtg"] = grouped["HomeOffRtg"] - grouped["HomeDefRtg"]
+    grouped["RoadPerformanceGap"] = grouped["RoadNetRtg"] - grouped["HomeNetRtg"]
+
     return grouped
