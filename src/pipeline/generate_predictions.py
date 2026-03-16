@@ -108,7 +108,7 @@ def _missing_report(X: pd.DataFrame, out_path: str) -> pd.DataFrame:
 
 def generate_predictions(
     season: int,
-    out_path: str = "submissions/submission.csv",
+    out_path: str = "submissions/2026/submission.csv",
     strict_missing_check: bool = True,
 ) -> None:
     raw = load_raw()
@@ -240,7 +240,7 @@ def generate_predictions(
         matchup["TeamA"].astype(int).values,
     )
     winners_out = pd.DataFrame({"WTeamID": winners, "LTeamID": losers})
-    winners_out.to_csv("submissions/WNCAATourneyPredictions.csv", index=False)
+    winners_out.to_csv("submissions/2026/WNCAATourneyPredictions.csv", index=False)
 
     # Write predictions separately
     preds_out = pd.DataFrame(
@@ -249,7 +249,7 @@ def generate_predictions(
             "Pred": submission_pred,
         }
     )
-    preds_out.to_csv("submissions/WNCAATourneyPredictions_with_preds.csv", index=False)
+    preds_out.to_csv("submissions/2026/WNCAATourneyPredictions_with_preds.csv", index=False)
 
 
 if __name__ == "__main__":

@@ -191,7 +191,7 @@ def predict_championship_total(
     aligned = _predict_total_from_bracket(
         season,
         team_features,
-        bracket_path="submissions/bracket_2026_results.csv",
+        bracket_path="submissions/2026/bracket_2026_results.csv",
     )
     if aligned is not None:
         aligned.to_csv(out_path, index=False)
@@ -237,4 +237,4 @@ def predict_championship_total(
 
 
 if __name__ == "__main__":
-    predict_championship_total(season=2026, out_path="submissions/championship_total.csv")
+    predict_championship_total(season=2026, out_path="submissions/2026/championship_total.csv")
