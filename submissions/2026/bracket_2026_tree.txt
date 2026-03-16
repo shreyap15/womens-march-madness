@@ -11,15 +11,15 @@ Region W
     R1W7: Illinois vs Colorado -> Colorado (p=0.7619)
     R1W8: Vanderbilt vs High Point -> Vanderbilt (p=1.0000)
   Round 2
-    R2W1: Connecticut vs Vanderbilt -> Connecticut (p=0.7895)
-    R2W2: Iowa St vs Colorado -> Colorado (p=0.6250)
-    R2W3: Maryland vs Ohio St -> Ohio St (p=0.5431)
-    R2W4: North Carolina vs Notre Dame -> Notre Dame (p=0.6667)
+    R2W1: Connecticut vs Iowa St -> Connecticut (p=1.0000)
+    R2W2: Maryland vs North Carolina -> North Carolina (p=0.5270)
+    R2W3: Notre Dame vs Ohio St -> Ohio St (p=0.5314)
+    R2W4: Colorado vs Vanderbilt -> Vanderbilt (p=0.7619)
   Sweet 16
-    R3W1: Connecticut vs Notre Dame -> Connecticut (p=1.0000)
-    R3W2: Colorado vs Ohio St -> Ohio St (p=0.6250)
+    R3W1: Connecticut vs North Carolina -> Connecticut (p=0.7895)
+    R3W2: Ohio St vs Vanderbilt -> Vanderbilt (p=0.6250)
   Elite 8
-    R4W1: Connecticut vs Ohio St -> Connecticut (p=1.0000)
+    R4W1: Connecticut vs Vanderbilt -> Connecticut (p=0.7895)
 
 Region X
   Round 1
@@ -32,15 +32,15 @@ Region X
     R1X7: Texas Tech vs Villanova -> Villanova (p=0.7619)
     R1X8: LSU vs Jacksonville -> LSU (p=1.0000)
   Round 2
-    R2X1: UCLA vs LSU -> LSU (p=0.6476)
-    R2X2: Oklahoma St vs Villanova -> Villanova (p=0.5122)
-    R2X3: Mississippi vs Duke -> Duke (p=0.6250)
-    R2X4: Minnesota vs Richmond -> Minnesota (p=0.5205)
+    R2X1: UCLA vs Oklahoma St -> UCLA (p=0.7895)
+    R2X2: Mississippi vs Minnesota -> Minnesota (p=0.5243)
+    R2X3: Richmond vs Duke -> Duke (p=0.7619)
+    R2X4: Villanova vs LSU -> LSU (p=0.7895)
   Sweet 16
-    R3X1: LSU vs Minnesota -> LSU (p=0.7895)
-    R3X2: Villanova vs Duke -> Duke (p=0.7619)
+    R3X1: UCLA vs Minnesota -> UCLA (p=0.7895)
+    R3X2: Duke vs LSU -> LSU (p=0.7895)
   Elite 8
-    R4X1: LSU vs Duke -> LSU (p=0.7895)
+    R4X1: UCLA vs LSU -> LSU (p=0.6476)
 
 Region Y
   Round 1
@@ -53,15 +53,15 @@ Region Y
     R1Y7: NC State vs Tennessee -> Tennessee (p=0.6250)
     R1Y8: Michigan vs Holy Cross -> Michigan (p=1.0000)
   Round 2
-    R2Y1: Texas vs Michigan -> Texas (p=0.7895)
-    R2Y2: Oregon vs Tennessee -> Tennessee (p=0.6273)
-    R2Y3: Kentucky vs Louisville -> Louisville (p=0.5417)
-    R2Y4: West Virginia vs Alabama -> West Virginia (p=0.6250)
+    R2Y1: Texas vs Oregon -> Texas (p=1.0000)
+    R2Y2: Kentucky vs West Virginia -> West Virginia (p=0.5154)
+    R2Y3: Alabama vs Louisville -> Louisville (p=0.7619)
+    R2Y4: Tennessee vs Michigan -> Michigan (p=0.7619)
   Sweet 16
     R3Y1: Texas vs West Virginia -> Texas (p=0.7895)
-    R3Y2: Tennessee vs Louisville -> Louisville (p=0.7895)
+    R3Y2: Louisville vs Michigan -> Michigan (p=0.6250)
   Elite 8
-    R4Y1: Texas vs Louisville -> Texas (p=0.7895)
+    R4Y1: Texas vs Michigan -> Texas (p=0.7895)
 
 Region Z
   Round 1
@@ -74,13 +74,13 @@ Region Z
     R1Z7: Georgia vs Virginia -> Georgia (p=0.5194)
     R1Z8: Iowa vs F Dickinson -> Iowa (p=1.0000)
   Round 2
-    R2Z1: South Carolina vs Iowa -> South Carolina (p=0.7895)
-    R2Z2: USC vs Georgia -> USC (p=0.6250)
-    R2Z3: Michigan St vs TCU -> TCU (p=0.7619)
-    R2Z4: Oklahoma vs Washington -> Oklahoma (p=0.7895)
+    R2Z1: South Carolina vs USC -> South Carolina (p=1.0000)
+    R2Z2: Michigan St vs Oklahoma -> Oklahoma (p=0.6250)
+    R2Z3: Washington vs TCU -> TCU (p=0.7895)
+    R2Z4: Georgia vs Iowa -> Iowa (p=1.0000)
   Sweet 16
     R3Z1: South Carolina vs Oklahoma -> South Carolina (p=0.7895)
-    R3Z2: USC vs TCU -> TCU (p=0.7895)
+    R3Z2: TCU vs Iowa -> TCU (p=0.5127)
   Elite 8
     R4Z1: South Carolina vs TCU -> South Carolina (p=0.7895)
 
