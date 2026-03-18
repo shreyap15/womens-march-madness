@@ -1,5 +1,6 @@
 # Large files
 data/MMasseyOrdinals.csv
+data/raw/men/MMasseyOrdinals.csv
 
 # Cache
 __pycache__/
