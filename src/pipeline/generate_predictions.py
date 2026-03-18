@@ -106,9 +106,21 @@ def _missing_report(X: pd.DataFrame, out_path: str) -> pd.DataFrame:
     return report
 
 
+def _clip_and_deterministic_tie(matchup: pd.DataFrame, preds: np.ndarray, eps: float = 0.0005) -> np.ndarray:
+    adjusted = np.clip(preds, eps, 1 - eps)
+    tie_mask = np.isclose(adjusted, 0.5)
+    if tie_mask.any():
+        a_ids = matchup["TeamA"].astype(int).values
+        b_ids = matchup["TeamB"].astype(int).values
+        nudge = np.where((a_ids + b_ids) % 2 == 0, eps, -eps)
+        adjusted = adjusted + tie_mask * nudge
+        adjusted = np.clip(adjusted, eps, 1 - eps)
+    return adjusted
+
+
 def generate_predictions(
     season: int,
-    out_path: str = "submissions/2026/submission.csv",
+    out_path: str = "submissions/women/2026/submission.csv",
     strict_missing_check: bool = True,
 ) -> None:
     raw = load_raw()
@@ -169,7 +181,7 @@ def generate_predictions(
     X = matchup[feature_cols]
 
     # Missing value diagnostics for prediction-time feature coverage
-    report = _missing_report(X, "data/processed/feature_missing_2026.csv")
+    report = _missing_report(X, "data/processed/women/feature_missing_2026.csv")
     core_features = [
         "Elo_diff",
         "AdjNetRtg_diff",
@@ -224,6 +236,9 @@ def generate_predictions(
         submission_pred = submission_pred + tie_mask * nudge
         submission_pred = np.clip(submission_pred, 0.0, 1.0)
 
+    # Ensure no 0/0.5/1 values in outputs
+    submission_pred = _clip_and_deterministic_tie(matchup, submission_pred, eps=0.0005)
+
     ids = matchup.apply(lambda r: f"{season}_{int(r['TeamA'])}_{int(r['TeamB'])}", axis=1)
     submission = pd.DataFrame({"ID": ids, "Pred": submission_pred})
     submission.to_csv(out_path, index=False)
@@ -240,7 +255,7 @@ def generate_predictions(
         matchup["TeamA"].astype(int).values,
     )
     winners_out = pd.DataFrame({"WTeamID": winners, "LTeamID": losers})
-    winners_out.to_csv("submissions/2026/WNCAATourneyPredictions.csv", index=False)
+    winners_out.to_csv("submissions/women/2026/WNCAATourneyPredictions.csv", index=False)
 
     # Write predictions separately
     preds_out = pd.DataFrame(
@@ -249,7 +264,7 @@ def generate_predictions(
             "Pred": submission_pred,
         }
     )
-    preds_out.to_csv("submissions/2026/WNCAATourneyPredictions_with_preds.csv", index=False)
+    preds_out.to_csv("submissions/women/2026/WNCAATourneyPredictions_with_preds.csv", index=False)
 
 
 if __name__ == "__main__":

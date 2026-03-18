@@ -13,7 +13,7 @@ class DataPaths:
 
     @property
     def raw(self) -> Path:
-        return self.root / "data" / "raw"
+        return self.root / "data" / "raw" / "women"
 
     @property
     def processed(self) -> Path:

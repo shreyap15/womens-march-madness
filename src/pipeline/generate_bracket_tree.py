@@ -21,8 +21,8 @@ def _fmt_match(row: pd.Series) -> str:
 
 
 def generate_bracket_tree(
-    results_path: str = "submissions/2026/bracket_2026_results.csv",
-    out_path: str = "submissions/2026/bracket_2026_tree.txt",
+    results_path: str = "submissions/women/2026/bracket_2026_results.csv",
+    out_path: str = "submissions/women/2026/bracket_2026_tree.txt",
 ) -> None:
     df = pd.read_csv(results_path)
 

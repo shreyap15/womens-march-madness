@@ -28,7 +28,7 @@ def _split_by_season(df: pd.DataFrame):
     return train, val, holdout
 
 
-def train_models(dataset_path: str = "data/processed/training_dataset.csv") -> None:
+def train_models(dataset_path: str = "data/processed/women/training_dataset.csv") -> None:
     df = pd.read_csv(dataset_path)
     # Pre-selection feature set (only features available before seeds/ESPN/FTE)
     preselect_base = [
@@ -187,7 +187,7 @@ def train_models(dataset_path: str = "data/processed/training_dataset.csv") -> N
 
     # Correlation matrix on validation predictions
     corr = pd.DataFrame(preds).corr()
-    corr.to_csv("data/processed/model_corr.csv")
+    corr.to_csv("data/processed/women/model_corr.csv")
 
     weights = _optimize_weights(preds, y_val)
 
@@ -271,8 +271,8 @@ def train_models(dataset_path: str = "data/processed/training_dataset.csv") -> N
 
     metrics_rows = _eval("validation", val) + _eval("holdout", holdout)
     metrics = pd.DataFrame(metrics_rows).sort_values(["split", "model"])
-    metrics.to_csv("data/processed/model_metrics.csv", index=False)
-    metrics.to_csv("data/processed/model_metrics_all_models.csv", index=False)
+    metrics.to_csv("data/processed/women/model_metrics.csv", index=False)
+    metrics.to_csv("data/processed/women/model_metrics_all_models.csv", index=False)
     print(f"Selected logistic C={best_log_c}, calibration={log_cal_type}")
     print(metrics.to_string(index=False))
 

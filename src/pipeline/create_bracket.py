@@ -7,7 +7,7 @@ from src.data.load_data import load_raw
 
 def create_bracket(
     season: int,
-    out_path: str = "submissions/bracket.csv",
+    out_path: str = "submissions/women/2026/bracket.csv",
     use_latest_if_missing: bool = True,
 ) -> None:
     raw = load_raw()
@@ -59,4 +59,4 @@ def create_bracket(
 
 
 if __name__ == "__main__":
-    create_bracket(season=2026, out_path="submissions/bracket_2026.csv")
+    create_bracket(season=2026, out_path="submissions/women/2026/bracket_2026.csv")

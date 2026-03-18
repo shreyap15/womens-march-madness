@@ -35,10 +35,10 @@ def _winner_from_prob(
 
 
 def predict_full_bracket(
-    bracket_path: str = "submissions/2026/bracket_2026.csv",
-    preds_path: str = "submissions/2026/WNCAATourneyPredictions_with_preds.csv",
-    out_path: str = "submissions/2026/bracket_2026_results.csv",
-    viz_path: str = "submissions/2026/bracket_2026_visual.md",
+    bracket_path: str = "submissions/women/2026/bracket_2026.csv",
+    preds_path: str = "submissions/women/2026/WNCAATourneyPredictions_with_preds.csv",
+    out_path: str = "submissions/women/2026/bracket_2026_results.csv",
+    viz_path: str = "submissions/women/2026/bracket_2026_visual.md",
 ) -> None:
     bracket = pd.read_csv(bracket_path)
     preds = pd.read_csv(preds_path)

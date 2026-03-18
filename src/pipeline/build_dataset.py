@@ -461,8 +461,8 @@ def build_training_dataset(raw: dict) -> Tuple[pd.DataFrame, List[str]]:
 def main() -> None:
     raw = load_raw()
     dataset, diff_cols = build_training_dataset(raw)
-    dataset.to_csv("data/processed/training_dataset.csv", index=False)
-    pd.Series(diff_cols).to_csv("data/processed/feature_cols.txt", index=False, header=False)
+    dataset.to_csv("data/processed/women/training_dataset.csv", index=False)
+    pd.Series(diff_cols).to_csv("data/processed/women/feature_cols.txt", index=False, header=False)
 
 
 if __name__ == "__main__":
