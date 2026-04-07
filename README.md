@@ -39,35 +39,13 @@ This project builds separate womens and mens NCAA tournament prediction pipeline
 
 ## Outputs
 ### 2026 (Women)
-- Submission (Kaggle format): `submissions/women/2026/submission.csv`
 - Pairs only: `submissions/women/2026/WNCAATourneyPredictions.csv`
 - Pairs with probabilities: `submissions/women/2026/WNCAATourneyPredictions_with_preds.csv`
-- Bracket results: `submissions/women/2026/bracket_2026_results.csv`
-- Bracket visualization: `submissions/women/2026/bracket_2026_visual.md`
-- Bracket tree: `submissions/women/2026/bracket_2026_tree.txt`
 - Championship total estimate: `submissions/women/2026/championship_total.csv`
 
 ### 2026 (Men)
-- Submission (Kaggle format): `submissions/men/2026/submission.csv`
 - Pairs with probabilities: `submissions/men/2026/MNCAATourneyPredictions_with_preds.csv`
-- Bracket results: `submissions/men/2026/bracket_2026_results.csv`
-- Bracket visualization: `submissions/men/2026/bracket_2026_visual.md`
-- Bracket tree: `submissions/men/2026/bracket_2026_tree.txt`
 - Championship total estimate: `submissions/men/2026/championship_total.csv`
-
-### Combined Submission (Men + Women)
-- Kaggle combined file: `submissions/submission.csv`
-
-### 2025 (Women)
-- Submission (Kaggle format): `submissions/2025/submission_2025.csv`
-- Bracket: `submissions/2025/bracket_2025.csv`
-- Championship total: `submissions/2025/championship_total_2025.csv`
-- Winners list: `submissions/2025/WNCAATourneyPredictions_2025_winners.csv`
-
-### Metrics
-- Women metrics: `data/processed/women/model_metrics_all_models.csv`
-- Men metrics: `data/processed/men/model_metrics_men.csv`
-- Women feature availability: `data/processed/women/feature_availability_2026.csv`
 
 ## How to Run
 ### Women
@@ -79,9 +57,6 @@ This project builds separate womens and mens NCAA tournament prediction pipeline
    - `python -m src.pipeline.generate_predictions`
 4. Championship total:
    - `python -m src.pipeline.predict_championship_total`
-5. Bracket simulation + tree:
-   - `python -m src.pipeline.predict_full_bracket`
-   - `python -m src.pipeline.generate_bracket_tree`
 
 ### Men
 1. Build dataset:
@@ -92,6 +67,3 @@ This project builds separate womens and mens NCAA tournament prediction pipeline
    - `python -m src.pipeline_men.generate_predictions_men`
 4. Championship total:
    - `python -m src.pipeline_men.predict_championship_total_men`
-5. Bracket simulation + tree:
-   - `python -m src.pipeline_men.predict_full_bracket_men`
-   - `python -m src.pipeline_men.generate_bracket_tree_men`
